@@ -5,14 +5,22 @@ import CloseButton from "./CloseButton";
 import Header from "./Header";
 import ProfileContent from "./ProfileContent";
 import Spinner from "./Spinner";
+import { downloadProfileImage } from "../lib/download";
 
 export const Modal = ({ profileData, error, isLoading, onClose }: ModalProps) => {
     const [isMounted, setIsMounted] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadError, setDownloadError] = useState<string | null>(null);
 
     useEffect(() => {
         const timer = setTimeout(() => setIsMounted(true), 10);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        setIsDownloading(false);
+        setDownloadError(null);
+    }, [profileData?.url, profileData?.username]);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -34,6 +42,25 @@ export const Modal = ({ profileData, error, isLoading, onClose }: ModalProps) =>
     }, [onClose]);
 
     if (!document.body || !profileData) return null;
+
+    const handleDownload = async () => {
+        if (!profileData.url || isDownloading) {
+            return;
+        }
+
+        setIsDownloading(true);
+        setDownloadError(null);
+
+        try {
+            await downloadProfileImage(profileData.url, profileData.username);
+        } catch (downloadError) {
+            console.error("Failed to download profile image", downloadError);
+            setDownloadError("Could not download the image right now.");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     return createPortal(
         <div
             aria-label={
@@ -128,7 +155,12 @@ export const Modal = ({ profileData, error, isLoading, onClose }: ModalProps) =>
                             height: "100%"
                         }}
                     >
-                        <Header profileData={profileData} />
+                        <Header
+                            downloadError={downloadError}
+                            isDownloading={isDownloading}
+                            onDownload={handleDownload}
+                            profileData={profileData}
+                        />
                         <ProfileContent profileData={profileData} />
                     </div>
                 ) : null}

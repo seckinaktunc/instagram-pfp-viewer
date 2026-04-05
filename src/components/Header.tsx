@@ -3,7 +3,19 @@ import VerifiedCheckmark from './VerifiedCheckmark'
 import Button from './Button'
 import { ProfileData } from '../types/profile.types'
 
-export default function Header({ profileData }: { profileData: ProfileData }) {
+interface HeaderProps {
+    profileData: ProfileData;
+    onDownload: () => void;
+    isDownloading: boolean;
+    downloadError: string | null;
+}
+
+export default function Header({
+    profileData,
+    onDownload,
+    isDownloading,
+    downloadError,
+}: HeaderProps) {
     return (
         <div className="_aasi _at8n">
             <div className="html-div xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x9f619 xjbqb8w x78zum5 x15mokao x1ga7v0g x16uus16 xbiv7yw x1n2onr6 x1plvlek xryxfnj x1c4vz4f x2lah0s x1q0g3np xqjyukv x6s0dn4 x1oa3qoh x1qughib">
@@ -84,7 +96,23 @@ export default function Header({ profileData }: { profileData: ProfileData }) {
                             </div>
                         </div>
                     </div>
-                    <Button label="Download image" />
+                    <Button
+                        disabled={!profileData.url || isDownloading}
+                        label={isDownloading ? "Downloading..." : "Download image"}
+                        onClick={onDownload}
+                    />
+                    {downloadError ? (
+                        <div
+                            style={{
+                                color: "#ffb4b4",
+                                fontSize: "12px",
+                                lineHeight: 1.4,
+                                marginTop: "8px",
+                            }}
+                        >
+                            {downloadError}
+                        </div>
+                    ) : null}
                 </header>
             </div>
         </div>

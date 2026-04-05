@@ -5,7 +5,8 @@
     "description": "Opens Instagram profile pictures in an in-page HD lightbox.",
     "permissions": [
         "activeTab",
-        "cookies"
+        "cookies",
+        "downloads"
     ],
     "host_permissions": [
         "*://*.instagram.com/*"

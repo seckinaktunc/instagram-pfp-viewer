@@ -1,23 +1,16 @@
-interface FetchMessage {
-    type: string;
-    userId: string;
-}
-
-interface FetchResponse {
-    url: string | null;
-}
+import { startImageDownload } from "./src/lib/download";
 
 chrome.runtime.onMessage.addListener((
-    request: FetchMessage,
+    request: RuntimeMessage,
     _sender: chrome.runtime.MessageSender,
-    sendResponse: (response: FetchResponse) => void
+    sendResponse: (response: RuntimeResponse) => void
 ) => {
-    if (request.type === 'FETCH_1080P') {
+    if (request.type === "FETCH_1080P") {
         const fetchHighRes = async () => {
             try {
                 const cookies = await chrome.cookies.getAll({ domain: "instagram.com" });
-                const sessionId = cookies.find(c => c.name === 'sessionid')?.value;
-                const dsUserId = cookies.find(c => c.name === 'ds_user_id')?.value;
+                const sessionId = cookies.find((c) => c.name === "sessionid")?.value;
+                const dsUserId = cookies.find((c) => c.name === "ds_user_id")?.value;
 
                 if (!sessionId || !dsUserId) {
                     console.error("Could not find IG auth cookies.");
@@ -29,14 +22,14 @@ chrome.runtime.onMessage.addListener((
 
                 const res = await fetch(`https://i.instagram.com/api/v1/users/${request.userId}/info/`, {
                     headers: {
-                        'User-Agent': 'Instagram 219.0.0.12.117 Android',
-                        'X-IG-App-ID': '350685531728',
-                        'Authorization': authHeader,
-                        'Accept': 'application/json',
-                    }
+                        "User-Agent": "Instagram 219.0.0.12.117 Android",
+                        "X-IG-App-ID": "350685531728",
+                        "Authorization": authHeader,
+                        "Accept": "application/json",
+                    },
                 });
 
-                if (!res.ok) throw new Error('Mobile API request failed');
+                if (!res.ok) throw new Error("Mobile API request failed");
 
                 const data = await res.json();
 
@@ -55,7 +48,7 @@ chrome.runtime.onMessage.addListener((
 
                 return null;
             } catch (err) {
-                console.error('Error fetching 1080p from background:', err);
+                console.error("Error fetching 1080p from background:", err);
                 return null;
             }
         };
@@ -64,4 +57,11 @@ chrome.runtime.onMessage.addListener((
 
         return true;
     }
+
+    if (request.type === "DOWNLOAD_IMAGE") {
+        startImageDownload(request, sendResponse);
+        return true;
+    }
+
+    return false;
 });
