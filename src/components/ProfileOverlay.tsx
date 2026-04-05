@@ -120,7 +120,7 @@ export default function ProfileOverlay() {
                             pointerEvents: 'none',
                         }}
                     >
-                        View Full{'\n'}Size
+                        View full-size
                     </span>
                 )}
             </div>
