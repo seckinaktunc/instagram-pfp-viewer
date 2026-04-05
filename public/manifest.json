@@ -26,5 +26,16 @@
             ],
             "run_at": "document_idle"
         }
-    ]
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "instagram-pfp-viewer@seckinaktunc.com",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ],
+                "optional": []
+            }
+        }
+    }
 }
