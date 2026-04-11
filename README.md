@@ -29,13 +29,12 @@ This creates the production files in `dist`.
 3. Click `Load unpacked`
 4. Select the `dist` folder
 
-## 3B. For Firefox-based browsers:
+### 3B. For Firefox-based browsers:
 1. Zip the contents of the `dist` folder (not the folder itself)
-2. Rename the `.zip` file to `.xpi`
-3. Go to https://addons.mozilla.org/developers/
-4. Submit your extension for signing
-5. Download the signed `.xpi` file from the dashboard
-6. Open the `.xpi` file in Firefox  
+2. Go to https://addons.mozilla.org/developers/
+3. Submit the extension for signing
+4. Download the signed `.xpi` file from the dashboard
+5. Open the `.xpi` file in Firefox
 
 ### 4. Use it on Instagram:
 1. Open a profile page on `https://www.instagram.com/<username>/`
