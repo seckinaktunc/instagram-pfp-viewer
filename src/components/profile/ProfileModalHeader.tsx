@@ -1,4 +1,3 @@
-import React from "react";
 import { ProfileData } from "../../types/profile.types";
 import Button from "../buttons/Button";
 import VerificationBadge from "../miscellaneous/VerificationBadge";

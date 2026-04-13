@@ -1,4 +1,3 @@
-import { ReactNode } from "react";
 import { ProfileData } from "./profile.types";
 
 export type ProfileModalState =
@@ -14,6 +13,6 @@ export interface ModalShellRenderProps {
 export interface ModalProps {
     ariaLabel: string;
     withCloseButton?: boolean;
-    children: (props: ModalShellRenderProps) => ReactNode;
+    children: (props: ModalShellRenderProps) => React.ReactNode;
     onClose: () => void;
 }

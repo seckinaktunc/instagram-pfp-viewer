@@ -1,10 +1,8 @@
-import { CSSProperties } from "react";
-
 interface ButtonProps {
     disabled?: boolean;
     label: string;
     onClick?: () => void;
-    style?: CSSProperties;
+    style?: React.CSSProperties;
 }
 
 export default function Button({

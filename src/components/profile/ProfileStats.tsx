@@ -1,6 +1,5 @@
-import React from "react";
 import { ProfileData } from "../../types/profile.types";
-import { formatCount } from "../../utils/formatters";
+import { formatCount } from "../../lib/formatters";
 import VerificationBadge from "../miscellaneous/VerificationBadge";
 
 export default function ProfileStats({ profileData }: { profileData: ProfileData }) {
