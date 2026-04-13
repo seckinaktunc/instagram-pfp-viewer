@@ -1,4 +1,5 @@
-import { getImageExtension, sanitizeFilenamePart } from "./fetch";
+import { DownloadMessage, DownloadResponse } from "../types/fetch.types";
+import { buildProfileImageFilename } from "./downloadHelpers";
 
 export const startImageDownload = (
     request: DownloadMessage,
@@ -28,7 +29,7 @@ export const downloadProfileImage = async (
     imageUrl: string,
     username: string | null
 ): Promise<void> => {
-    const filename = `${sanitizeFilenamePart(username)}-profile-picture${getImageExtension(imageUrl)}`;
+    const filename = buildProfileImageFilename(imageUrl, username);
 
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
@@ -36,7 +37,7 @@ export const downloadProfileImage = async (
                 type: "DOWNLOAD_IMAGE",
                 url: imageUrl,
                 filename,
-            },
+            } satisfies DownloadMessage,
             (response?: DownloadResponse) => {
                 if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message));
