@@ -1,10 +1,9 @@
 {
     "manifest_version": 3,
     "name": "Instagram PFP Viewer",
-    "version": "1.0",
-    "description": "Opens Instagram profile pictures in an in-page HD lightbox.",
+    "version": "1.1",
+    "description": "View full-size profile pictures right inside Instagram, in-page and in one click.",
     "permissions": [
-        "activeTab",
         "cookies",
         "downloads"
     ],
