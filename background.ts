@@ -1,4 +1,5 @@
 import { startImageDownload } from "./src/lib/download";
+import { RuntimeMessage, RuntimeResponse } from "./src/types/fetch.types";
 
 chrome.runtime.onMessage.addListener((
     request: RuntimeMessage,
@@ -9,18 +10,18 @@ chrome.runtime.onMessage.addListener((
         const fetchHighRes = async () => {
             try {
                 const cookies = await chrome.cookies.getAll({ domain: "instagram.com" });
-                const sessionId = cookies.find((c) => c.name === "sessionid")?.value;
-                const dsUserId = cookies.find((c) => c.name === "ds_user_id")?.value;
+                const sessionId = cookies.find((cookie) => cookie.name === "sessionid")?.value;
+                const dsUserId = cookies.find((cookie) => cookie.name === "ds_user_id")?.value;
 
                 if (!sessionId || !dsUserId) {
-                    console.error("Could not find IG auth cookies.");
+                    console.error("Could not find Instagram auth cookies.");
                     return null;
                 }
 
                 const payload = JSON.stringify({ ds_user_id: dsUserId, sessionid: sessionId });
                 const authHeader = `Bearer IGT:2:${btoa(payload)}`;
 
-                const res = await fetch(`https://i.instagram.com/api/v1/users/${request.userId}/info/`, {
+                const response = await fetch(`https://i.instagram.com/api/v1/users/${request.userId}/info/`, {
                     headers: {
                         "User-Agent": "Instagram 219.0.0.12.117 Android",
                         "X-IG-App-ID": "350685531728",
@@ -29,26 +30,27 @@ chrome.runtime.onMessage.addListener((
                     },
                 });
 
-                if (!res.ok) throw new Error("Mobile API request failed");
+                if (!response.ok) {
+                    throw new Error("Mobile API request failed");
+                }
 
-                const data = await res.json();
-
-                // 1080p
+                const data = await response.json();
                 const original1080p = data.user?.hd_profile_pic_url_info?.url;
                 if (original1080p) {
                     return original1080p as string;
                 }
 
-                // Fallback
                 const versions = data.user?.hd_profile_pic_versions;
                 if (versions && versions.length > 0) {
-                    const largest = versions.sort((a: { width: number }, b: { width: number }) => b.width - a.width)[0];
-                    return largest.url as string;
+                    const largestVersion = versions.sort(
+                        (leftVersion: { width: number }, rightVersion: { width: number }) => rightVersion.width - leftVersion.width
+                    )[0];
+                    return largestVersion.url as string;
                 }
 
                 return null;
-            } catch (err) {
-                console.error("Error fetching 1080p from background:", err);
+            } catch (error) {
+                console.error("Error fetching 1080p from background:", error);
                 return null;
             }
         };
