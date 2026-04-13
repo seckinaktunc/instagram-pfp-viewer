@@ -1,3 +1,3 @@
-import initialize from './src/lib/initialize';
+import initialize from "./src/content/initialize";
 
 initialize();
