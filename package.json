@@ -4,7 +4,7 @@
   "description": "",
   "main": "content.js",
   "scripts": {
-    "build": "vite build && vite build --mode background",
+    "build": "vite build && vite build --mode background && node scripts/copy-manifest.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
