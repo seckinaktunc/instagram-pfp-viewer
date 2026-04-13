@@ -1,22 +1,22 @@
-interface FetchMessage {
+export interface FetchMessage {
     type: "FETCH_1080P";
     userId: string;
 }
 
-interface DownloadMessage {
+export interface DownloadMessage {
     type: "DOWNLOAD_IMAGE";
     url: string;
     filename: string;
 }
 
-interface FetchResponse {
+export interface FetchResponse {
     url: string | null;
 }
 
-interface DownloadResponse {
+export interface DownloadResponse {
     ok: boolean;
     error?: string;
 }
 
-type RuntimeMessage = FetchMessage | DownloadMessage;
-type RuntimeResponse = FetchResponse | DownloadResponse;
+export type RuntimeMessage = FetchMessage | DownloadMessage;
+export type RuntimeResponse = FetchResponse | DownloadResponse;
