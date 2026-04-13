@@ -1,5 +1,5 @@
 # Instagram PFP Viewer
-View full-size Instagram profile pictures right inside Instagram, in-page and in one click.
+View full-size profile pictures right inside Instagram, in-page and in one click.
 
 You do not need to open another tab or pay for 3rd party apps to view profile pictures anymore.
 
