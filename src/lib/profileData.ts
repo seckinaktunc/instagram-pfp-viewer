@@ -1,9 +1,17 @@
 import { FetchResponse } from "../types/fetch.types";
-import { ProfileData } from "../types/profile.types";
+import { BiographyMentionLink, ProfileData } from "../types/profile.types";
 
 interface BaseProfileResult {
     profile: ProfileData;
     userId: string | null;
+}
+
+interface BiographyMentionCandidate {
+    endIndex: number | null;
+    startIndex: number | null;
+    text: string | null;
+    url: string | null;
+    username: string | null;
 }
 
 const profileCache = new Map<string, ProfileData>();
@@ -26,6 +34,178 @@ export const withLiveStoryState = (profileData: ProfileData, hasStory: boolean):
     };
 };
 
+const getRecord = (value: unknown): Record<string, unknown> | null => {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    return value as Record<string, unknown>;
+};
+
+const getString = (value: unknown) => {
+    return typeof value === "string" ? value : null;
+};
+
+const getNumber = (value: unknown) => {
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+};
+
+const getInstagramUsernameFromUrl = (value: string | null) => {
+    if (!value) {
+        return null;
+    }
+
+    const matchedUsername = value.match(/instagram\.com\/([A-Za-z0-9._]+)\/?/i);
+    return matchedUsername?.[1] || null;
+};
+
+const getBiographyMentionCandidate = (value: unknown): BiographyMentionCandidate | null => {
+    const record = getRecord(value);
+    if (!record) {
+        return null;
+    }
+
+    const userRecord =
+        getRecord(record.user) ||
+        getRecord(record.mentioned_user) ||
+        getRecord(record.profile) ||
+        getRecord(record.entity);
+    const linkRecord = getRecord(record.link) || getRecord(record.link_info);
+
+    const url =
+        getString(record.url) ||
+        getString(record.href) ||
+        getString(linkRecord?.url) ||
+        getString(linkRecord?.href);
+    const username =
+        getString(record.username) ||
+        getString(userRecord?.username) ||
+        getInstagramUsernameFromUrl(url);
+
+    const startIndex =
+        getNumber(record.start) ??
+        getNumber(record.start_index) ??
+        getNumber(record.offset) ??
+        getNumber(record.inline_start);
+    const length =
+        getNumber(record.length) ??
+        getNumber(record.inline_length);
+    const endIndex =
+        getNumber(record.end) ??
+        getNumber(record.end_index) ??
+        (startIndex !== null && length !== null ? startIndex + length : null);
+
+    return {
+        endIndex,
+        startIndex,
+        text:
+            getString(record.text) ||
+            getString(record.title) ||
+            getString(record.display_text) ||
+            (username ? `@${username}` : null),
+        url,
+        username,
+    };
+};
+
+const normalizeBiographyMentionLinks = (
+    biography: string,
+    candidates: BiographyMentionCandidate[]
+): BiographyMentionLink[] => {
+    const normalizedLinks: BiographyMentionLink[] = [];
+    const seenLinkKeys = new Set<string>();
+    let searchIndex = 0;
+
+    const orderedCandidates = candidates
+        .filter((candidate) => candidate.username || candidate.text || candidate.url)
+        .sort((leftCandidate, rightCandidate) => {
+            const leftStartIndex = leftCandidate.startIndex ?? Number.MAX_SAFE_INTEGER;
+            const rightStartIndex = rightCandidate.startIndex ?? Number.MAX_SAFE_INTEGER;
+
+            return leftStartIndex - rightStartIndex;
+        });
+
+    for (const candidate of orderedCandidates) {
+        let username = candidate.username || getInstagramUsernameFromUrl(candidate.url);
+        let linkText = candidate.text;
+        let startIndex = candidate.startIndex;
+        let endIndex = candidate.endIndex;
+
+        if (startIndex !== null && endIndex !== null && startIndex >= 0 && endIndex <= biography.length && endIndex > startIndex) {
+            linkText = biography.slice(startIndex, endIndex);
+        }
+
+        if ((!linkText || !linkText.startsWith("@")) && username) {
+            linkText = `@${username}`;
+        }
+
+        if (!linkText) {
+            continue;
+        }
+
+        if (startIndex === null || endIndex === null || biography.slice(startIndex, endIndex) !== linkText) {
+            const matchedIndex = biography.indexOf(linkText, searchIndex);
+
+            if (matchedIndex === -1) {
+                continue;
+            }
+
+            startIndex = matchedIndex;
+            endIndex = matchedIndex + linkText.length;
+        }
+
+        if (!linkText.startsWith("@")) {
+            continue;
+        }
+
+        username = username || linkText.slice(1);
+
+        if (!username || !/^[A-Za-z0-9._]+$/.test(username)) {
+            continue;
+        }
+
+        const linkKey = `${startIndex}:${endIndex}:${username}`;
+
+        if (seenLinkKeys.has(linkKey)) {
+            continue;
+        }
+
+        seenLinkKeys.add(linkKey);
+        searchIndex = endIndex;
+        normalizedLinks.push({
+            endIndex,
+            startIndex,
+            text: linkText,
+            username,
+        });
+    }
+
+    return normalizedLinks;
+};
+
+const extractBiographyMentionLinks = (user: unknown, biography: string) => {
+    const userRecord = getRecord(user);
+    if (!userRecord || !biography) {
+        return [];
+    }
+
+    const biographyWithEntities = getRecord(userRecord.biography_with_entities);
+    const rawCandidates = [
+        ...(Array.isArray(biographyWithEntities?.entities) ? biographyWithEntities.entities : []),
+        ...(Array.isArray(biographyWithEntities?.links) ? biographyWithEntities.links : []),
+        ...(Array.isArray(biographyWithEntities?.ranges) ? biographyWithEntities.ranges : []),
+        ...(Array.isArray(userRecord.biography_entities) ? userRecord.biography_entities : []),
+        ...(Array.isArray(userRecord.bio_links) ? userRecord.bio_links : []),
+    ];
+
+    return normalizeBiographyMentionLinks(
+        biography,
+        rawCandidates
+            .map(getBiographyMentionCandidate)
+            .filter((candidate): candidate is BiographyMentionCandidate => Boolean(candidate))
+    );
+};
+
 const fetchBaseProfileData = async (username: string): Promise<BaseProfileResult | null> => {
     const profileResponse = await fetch(
         `https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
@@ -46,10 +226,11 @@ const fetchBaseProfileData = async (username: string): Promise<BaseProfileResult
     return {
         userId: user.id || null,
         profile: {
-            url: user.hd_profile_pic_url_info?.url || user.profile_pic_url_hd || null,
+            imageUrl: user.hd_profile_pic_url_info?.url || user.profile_pic_url_hd || null,
             username: user.username || username,
             isVerified: user.is_verified || false,
             biography: user.biography || "",
+            biographyLinks: extractBiographyMentionLinks(user, user.biography || ""),
             fullName: user.full_name || "",
             postCount: user.edge_owner_to_timeline_media?.count || 0,
             followerCount: user.edge_followed_by?.count || 0,
@@ -95,7 +276,7 @@ const fetchProfileDataUncached = async (username: string): Promise<ProfileData |
         if (highResolutionUrl) {
             return {
                 ...profile,
-                url: highResolutionUrl,
+                imageUrl: highResolutionUrl,
             };
         }
     } catch (error) {
