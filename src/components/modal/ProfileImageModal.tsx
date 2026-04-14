@@ -132,13 +132,11 @@ export default function ProfileImageModal({
                             storyRingSourceCanvas={storyRingSourceCanvas}
                             username={username}
                         />
-                        {profileData ? (
-                            <ProfileModalContent
-                                liveAvatarImageSrc={liveAvatarImageSrc}
-                                profileData={profileData}
-                                storyRingSourceCanvas={storyRingSourceCanvas}
-                            />
-                        ) : null}
+                        <ProfileModalContent
+                            liveAvatarImageSrc={liveAvatarImageSrc}
+                            profileData={profileData}
+                            storyRingSourceCanvas={storyRingSourceCanvas}
+                        />
                     </div>
                 </div>
             )}

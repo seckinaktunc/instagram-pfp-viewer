@@ -23,6 +23,19 @@ export const PROFILE_FETCH_ERROR_MESSAGE = PROFILE_REQUEST_ERROR;
 
 export const normalizeUsername = (username: string) => username.trim().toLowerCase();
 
+export const createEmptyProfileData = (username: string): ProfileData => ({
+    imageUrl: null,
+    username,
+    isVerified: false,
+    biography: "",
+    biographyLinks: [],
+    fullName: "",
+    postCount: 0,
+    followerCount: 0,
+    followingCount: 0,
+    hasStory: false,
+});
+
 export const getCachedProfileData = (username: string) => {
     return profileCache.get(normalizeUsername(username)) || null;
 };
