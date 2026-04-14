@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import { downloadProfileImage } from "../../lib/download";
 import { ProfileModalState } from "../../types/modal.types";
+import { LiveAvatarImageSource, StoryRingSourceCanvas } from "../../types/profile.types";
 import ProfileModalContent from "../profile/ProfileModalContent";
 import ProfileModalHeader from "../profile/ProfileModalHeader";
 import Spinner from "../miscellaneous/Spinner";
 import Modal from "./Modal";
 
 interface ProfileImageModalProps {
+    hasStory: boolean;
+    liveAvatarImageSrc: LiveAvatarImageSource;
     onClose: () => void;
     state: ProfileModalState;
+    storyRingSourceCanvas: StoryRingSourceCanvas;
 }
 
 export default function ProfileImageModal({
+    hasStory,
+    liveAvatarImageSrc,
     onClose,
     state,
+    storyRingSourceCanvas,
 }: ProfileImageModalProps) {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -21,7 +28,7 @@ export default function ProfileImageModal({
     useEffect(() => {
         setIsDownloading(false);
         setDownloadError(null);
-    }, [state.status === "closed" ? "closed" : state.username, state.status === "closed" ? null : state.data?.url]);
+    }, [state.status === "closed" ? "closed" : state.username, state.status === "closed" ? null : state.data?.imageUrl]);
 
     if (state.status === "closed") {
         return null;
@@ -31,7 +38,7 @@ export default function ProfileImageModal({
     const username = state.username;
 
     const handleDownload = async () => {
-        if (!profileData?.url || isDownloading) {
+        if (!profileData?.imageUrl || isDownloading) {
             return;
         }
 
@@ -39,7 +46,7 @@ export default function ProfileImageModal({
         setDownloadError(null);
 
         try {
-            await downloadProfileImage(profileData.url, profileData.username);
+            await downloadProfileImage(profileData.imageUrl, profileData.username);
         } catch (error) {
             console.error("Failed to download profile image", error);
             setDownloadError("Could not download the image right now.");
@@ -77,10 +84,10 @@ export default function ProfileImageModal({
                             background: "#000000",
                         }}
                     >
-                        {profileData?.url ? (
+                        {profileData?.imageUrl ? (
                             <img
                                 alt={`${username} profile picture`}
-                                src={profileData.url}
+                                src={profileData.imageUrl}
                                 style={{
                                     display: "block",
                                     height: "100%",
@@ -89,11 +96,11 @@ export default function ProfileImageModal({
                             />
                         ) : null}
 
-                        {!profileData?.url && state.status === "loading" ? (
+                        {!profileData?.imageUrl && state.status === "loading" ? (
                             <Spinner />
                         ) : null}
 
-                        {!profileData?.url && state.status === "error" ? (
+                        {!profileData?.imageUrl && state.status === "error" ? (
                             <div
                                 style={{
                                     maxWidth: "420px",
@@ -117,13 +124,20 @@ export default function ProfileImageModal({
                     >
                         <ProfileModalHeader
                             downloadError={downloadError}
+                            hasStory={hasStory}
                             isDownloading={isDownloading}
+                            liveAvatarImageSrc={liveAvatarImageSrc}
                             onDownload={handleDownload}
                             profileData={profileData}
+                            storyRingSourceCanvas={storyRingSourceCanvas}
                             username={username}
                         />
                         {profileData ? (
-                            <ProfileModalContent profileData={profileData} />
+                            <ProfileModalContent
+                                liveAvatarImageSrc={liveAvatarImageSrc}
+                                profileData={profileData}
+                                storyRingSourceCanvas={storyRingSourceCanvas}
+                            />
                         ) : null}
                     </div>
                 </div>

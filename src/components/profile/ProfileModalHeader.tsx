@@ -1,21 +1,27 @@
-import { ProfileData } from "../../types/profile.types";
+import { LiveAvatarImageSource, ProfileData, StoryRingSourceCanvas } from "../../types/profile.types";
 import Button from "../buttons/Button";
 import VerificationBadge from "../miscellaneous/VerificationBadge";
 import ProfileAccountAvatar from "./ProfileAccountAvatar";
 
 interface ProfileModalHeaderProps {
     downloadError: string | null;
+    hasStory: boolean;
     isDownloading: boolean;
+    liveAvatarImageSrc: LiveAvatarImageSource;
     onDownload: () => void;
     profileData: ProfileData | null;
+    storyRingSourceCanvas: StoryRingSourceCanvas;
     username: string;
 }
 
 export default function ProfileModalHeader({
     downloadError,
+    hasStory,
     isDownloading,
+    liveAvatarImageSrc,
     onDownload,
     profileData,
+    storyRingSourceCanvas,
     username,
 }: ProfileModalHeaderProps) {
     const displayUsername = profileData?.username || username;
@@ -27,7 +33,9 @@ export default function ProfileModalHeader({
                     <span className="xjp7ctv">
                         <div>
                             <ProfileAccountAvatar
-                                imageUrl={profileData?.url || null}
+                                hasStory={hasStory}
+                                imageUrl={liveAvatarImageSrc}
+                                storyRingSourceCanvas={storyRingSourceCanvas}
                                 username={displayUsername}
                                 variant="header"
                             />
@@ -81,7 +89,7 @@ export default function ProfileModalHeader({
                         </div>
                     </div>
                     <Button
-                        disabled={!profileData?.url || isDownloading}
+                        disabled={!profileData?.imageUrl || isDownloading}
                         label={isDownloading ? "Downloading..." : "Download image"}
                         onClick={onDownload}
                     />

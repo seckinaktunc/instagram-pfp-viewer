@@ -1,8 +1,14 @@
 export interface AvatarTarget {
     hasStory: boolean;
+    liveAvatarImageSrc: string | null;
     mountElement: HTMLElement;
+    storyRingSourceCanvas: HTMLCanvasElement | null;
     storyTrigger: HTMLElement | null;
 }
+
+const MODAL_STORY_RING_TARGET_SIZE = 41;
+const MIN_SMALL_AVATAR_SIZE = 20;
+const MAX_SMALL_AVATAR_SIZE = 48;
 
 const isVisibleElement = (element: Element | null): element is HTMLElement => {
     if (!(element instanceof HTMLElement)) {
@@ -44,6 +50,29 @@ const rectContainsRect = (outerRect: DOMRect, innerRect: DOMRect) => {
         outerRect.right >= innerRect.right &&
         outerRect.bottom >= innerRect.bottom
     );
+};
+
+const getImageSource = (image: HTMLImageElement) => {
+    return image.currentSrc || image.src || image.getAttribute("src") || null;
+};
+
+const isExtensionElement = (element: Element) => {
+    return Boolean(
+        element.closest(".instagram-pfp-viewer") ||
+        element.closest("[aria-modal='true']")
+    );
+};
+
+const getInteractiveContainer = (element: HTMLElement) => {
+    return element.closest("a, button, [role='button']");
+};
+
+const hrefMatchesUsername = (href: string | null, username: string) => {
+    if (!href) {
+        return false;
+    }
+
+    return href.toLowerCase().includes(`/${username.toLowerCase()}/`);
 };
 
 const isStoryTrigger = (element: HTMLElement, username: string) => {
@@ -129,6 +158,95 @@ const getStoryTrigger = (image: HTMLImageElement, header: HTMLElement, username:
     }) || null;
 };
 
+const getSmallStoryRingSourceCanvas = (
+    username: string,
+    header: HTMLElement,
+    liveAvatarImageSrc: string | null
+) => {
+    const canvasCandidates = Array.from(document.querySelectorAll("canvas")).filter((canvas): canvas is HTMLCanvasElement => {
+        if (!(canvas instanceof HTMLCanvasElement) || !isVisibleElement(canvas)) {
+            return false;
+        }
+
+        if (header.contains(canvas) || isExtensionElement(canvas)) {
+            return false;
+        }
+
+        if (canvas.width <= 0 || canvas.height <= 0) {
+            return false;
+        }
+
+        return true;
+    });
+
+    const scoredCanvasCandidates = canvasCandidates.map((canvasCandidate) => {
+        const canvasRect = canvasCandidate.getBoundingClientRect();
+        const enclosedImages = Array.from(document.querySelectorAll("img")).filter((image): image is HTMLImageElement => {
+            if (!(image instanceof HTMLImageElement) || !isVisibleElement(image)) {
+                return false;
+            }
+
+            if (header.contains(image) || isExtensionElement(image)) {
+                return false;
+            }
+
+            const imageRect = image.getBoundingClientRect();
+            const imageSize = Math.max(imageRect.width, imageRect.height);
+            if (imageSize < MIN_SMALL_AVATAR_SIZE || imageSize > MAX_SMALL_AVATAR_SIZE) {
+                return false;
+            }
+
+            if (!rectContainsRect(canvasRect, imageRect)) {
+                return false;
+            }
+
+            const interactiveContainer = getInteractiveContainer(image);
+            const href = interactiveContainer?.getAttribute("href") || null;
+            const imageSource = getImageSource(image);
+
+            return hrefMatchesUsername(href, username) || (
+                Boolean(liveAvatarImageSrc) &&
+                imageSource === liveAvatarImageSrc
+            );
+        });
+
+        if (!enclosedImages.length) {
+            return null;
+        }
+
+        const displayedSize = Math.max(canvasRect.width, canvasRect.height);
+
+        return {
+            canvas: canvasCandidate,
+            enclosedImageSize: Math.max(
+                ...enclosedImages.map((image) => Math.max(
+                    image.getBoundingClientRect().width,
+                    image.getBoundingClientRect().height
+                ))
+            ),
+            sizeDistance: Math.abs(displayedSize - MODAL_STORY_RING_TARGET_SIZE),
+            displayedSize,
+        };
+    }).filter((candidate): candidate is {
+        canvas: HTMLCanvasElement;
+        displayedSize: number;
+        enclosedImageSize: number;
+        sizeDistance: number;
+    } => Boolean(candidate));
+
+    return scoredCanvasCandidates.sort((leftCandidate, rightCandidate) => {
+        if (leftCandidate.sizeDistance !== rightCandidate.sizeDistance) {
+            return leftCandidate.sizeDistance - rightCandidate.sizeDistance;
+        }
+
+        if (leftCandidate.displayedSize !== rightCandidate.displayedSize) {
+            return leftCandidate.displayedSize - rightCandidate.displayedSize;
+        }
+
+        return leftCandidate.enclosedImageSize - rightCandidate.enclosedImageSize;
+    })[0]?.canvas || null;
+};
+
 export const getProfileAvatarTarget = (username: string): AvatarTarget | null => {
     const header = getProfileHeader();
 
@@ -142,10 +260,14 @@ export const getProfileAvatarTarget = (username: string): AvatarTarget | null =>
         return null;
     }
 
+    const liveAvatarImageSrc = getImageSource(avatarImage);
     const storyTrigger = getStoryTrigger(avatarImage, header, username);
+    const storyRingSourceCanvas = getSmallStoryRingSourceCanvas(username, header, liveAvatarImageSrc);
 
     return {
+        liveAvatarImageSrc,
         mountElement: getMountElement(avatarImage, header),
+        storyRingSourceCanvas,
         storyTrigger,
         hasStory: Boolean(storyTrigger),
     };

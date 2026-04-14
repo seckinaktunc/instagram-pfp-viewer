@@ -68,6 +68,7 @@ const syncOverlay = () => {
     overlayRoot?.render(
         <ProfileOverlay
             hasStory={avatarTarget.hasStory}
+            liveAvatarImageSrc={avatarTarget.liveAvatarImageSrc}
             onViewStory={() => {
                 const openedNativeStory = triggerNativeStoryViewer(avatarTarget.storyTrigger);
 
@@ -75,6 +76,7 @@ const syncOverlay = () => {
                     window.location.assign(`/stories/${username}/`);
                 }
             }}
+            storyRingSourceCanvas={avatarTarget.storyRingSourceCanvas}
             username={username}
         />
     );

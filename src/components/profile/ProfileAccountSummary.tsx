@@ -1,8 +1,19 @@
-import { ProfileData } from "../../types/profile.types";
+import { LiveAvatarImageSource, ProfileData, StoryRingSourceCanvas } from "../../types/profile.types";
 import VerificationBadge from "../miscellaneous/VerificationBadge";
 import ProfileAccountAvatar from "./ProfileAccountAvatar";
+import ProfileBiography from "./ProfileBiography";
 
-export default function ProfileAccountSummary({ profileData }: { profileData: ProfileData }) {
+interface ProfileAccountSummaryProps {
+    liveAvatarImageSrc: LiveAvatarImageSource;
+    profileData: ProfileData;
+    storyRingSourceCanvas: StoryRingSourceCanvas;
+}
+
+export default function ProfileAccountSummary({
+    liveAvatarImageSrc,
+    profileData,
+    storyRingSourceCanvas,
+}: ProfileAccountSummaryProps) {
     return (
         <div className="x78zum5 xdt5ytf x1iyjqo2 xs83m0k x2lwn1j x1odjw0f x1n2onr6 x9ek82g x6ikm8r xdj266r x14z9mp x4ii5y1 x1lziwak xexx8yu xv54qhq x18d9i69 xf7dkkf">
             <ul className="_a9z6 _a9za">
@@ -14,7 +25,9 @@ export default function ProfileAccountSummary({ profileData }: { profileData: Pr
                                     <span className="xjp7ctv">
                                         <div>
                                             <ProfileAccountAvatar
-                                                imageUrl={profileData.url}
+                                                hasStory={profileData.hasStory}
+                                                imageUrl={liveAvatarImageSrc}
+                                                storyRingSourceCanvas={storyRingSourceCanvas}
                                                 username={profileData.username}
                                                 variant="summary"
                                             />
@@ -43,9 +56,10 @@ export default function ProfileAccountSummary({ profileData }: { profileData: Pr
                                         />
                                     </h2>
                                     <div className="xt0psk2">
-                                        <h1 className="_ap3a _aaco _aacu _aacx _aad7 _aade" dir="auto">
-                                            {profileData.biography}
-                                        </h1>
+                                        <ProfileBiography
+                                            biography={profileData.biography}
+                                            biographyLinks={profileData.biographyLinks}
+                                        />
                                     </div>
                                 </div>
                             </div>

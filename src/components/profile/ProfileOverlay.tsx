@@ -6,19 +6,23 @@ import {
     withLiveStoryState,
 } from "../../lib/profileData";
 import { ProfileModalState } from "../../types/modal.types";
-import { ProfileData } from "../../types/profile.types";
+import { LiveAvatarImageSource, ProfileData, StoryRingSourceCanvas } from "../../types/profile.types";
 import OptionsModal from "../modal/OptionsModal";
 import ProfileImageModal from "../modal/ProfileImageModal";
 
 interface ProfileOverlayProps {
     hasStory: boolean;
+    liveAvatarImageSrc: LiveAvatarImageSource;
     onViewStory: () => void;
+    storyRingSourceCanvas: StoryRingSourceCanvas;
     username: string;
 }
 
 export default function ProfileOverlay({
     hasStory,
+    liveAvatarImageSrc,
     onViewStory,
+    storyRingSourceCanvas,
     username,
 }: ProfileOverlayProps) {
     const [isHovered, setIsHovered] = useState(false);
@@ -233,11 +237,14 @@ export default function ProfileOverlay({
             />
 
             <ProfileImageModal
+                hasStory={hasStory}
+                liveAvatarImageSrc={liveAvatarImageSrc}
                 onClose={() => {
                     setIsHovered(false);
                     setProfileModalState({ status: "closed" });
                 }}
                 state={profileModalState}
+                storyRingSourceCanvas={storyRingSourceCanvas}
             />
         </>
     );
